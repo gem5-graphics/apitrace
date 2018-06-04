@@ -54,6 +54,10 @@ add_library (retrace_common STATIC
     ws.cpp
     ${ws_os}
 )
+
+
+set_property(TARGET retrace_common PROPERTY POSITION_INDEPENDENT_CODE ON)
+
 target_link_libraries (retrace_common
     image
     common
@@ -92,6 +96,9 @@ add_library (glretrace_common STATIC
     metric_backend_intel_perfquery.cpp
     metric_backend_opengl.cpp
 )
+
+set_property(TARGET glretrace_common PROPERTY POSITION_INDEPENDENT_CODE ON)
+
 add_dependencies (glretrace_common glproc)
 target_link_libraries (glretrace_common
     retrace_common
@@ -117,9 +124,28 @@ if (WIN32 OR APPLE OR X11_FOUND)
         ${glws_os}
     )
 
+    add_library (glretracelib SHARED
+        glretrace_main.cpp
+        ${glws_os}
+    )
+
+    set_property(TARGET glretracelib 
+                PROPERTY POSITION_INDEPENDENT_CODE ON)
+
+    set_target_properties(glretracelib PROPERTIES OUTPUT_NAME glretrace)
+
     add_dependencies (glretrace glproc)
+    add_dependencies (glretracelib glproc)
 
     target_link_libraries (glretrace
+        retrace_common
+        glretrace_common
+        glhelpers
+        glproc_gl
+    )
+
+
+    target_link_libraries (glretracelib
         retrace_common
         glretrace_common
         glhelpers
@@ -142,6 +168,7 @@ if (WIN32 OR APPLE OR X11_FOUND)
             )
         else ()
             target_link_libraries (glretrace ${X11_X11_LIB})
+            target_link_libraries (glretracelib ${X11_X11_LIB})
         endif ()
 
         target_link_libraries (glretrace
@@ -151,9 +178,23 @@ if (WIN32 OR APPLE OR X11_FOUND)
             ${CMAKE_THREAD_LIBS_INIT}
             ${CMAKE_DL_LIBS}
         )
+
+
+        target_link_libraries (glretracelib
+            # gdb doesn't like when pthreads is loaded through dlopen (which happens
+            # when dlopen'ing libGL), so link pthreads to avoid this issue.  See also
+            # http://stackoverflow.com/questions/2702628/gdb-cannot-find-new-threads-generic-error
+            ${CMAKE_THREAD_LIBS_INIT}
+            ${CMAKE_DL_LIBS}
+        )
     endif ()
 
-    install (TARGETS glretrace RUNTIME DESTINATION bin) 
+    install (TARGETS glretrace 
+          RUNTIME DESTINATION bin
+          ) 
+    install (TARGETS glretracelib
+          LIBRARY DESTINATION bin
+          )
     install_pdb (glretrace DESTINATION bin)
 endif ()
 

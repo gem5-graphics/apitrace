@@ -12,6 +12,8 @@ add_library (image STATIC
     image_md5.cpp
 )
 
+set_property(TARGET image PROPERTY POSITION_INDEPENDENT_CODE ON)
+
 target_link_libraries (image
     ${PNG_LIBRARIES}
     ${MD5_LIBRARIES}

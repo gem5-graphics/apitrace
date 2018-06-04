@@ -892,9 +892,9 @@ new_failure_handler(size_t size)
 
 #endif
 
-
 extern "C"
-int main(int argc, char **argv)
+__attribute__((visibility("default"))) 
+int run_retrace(int argc, char **argv)
 {
     using namespace retrace;
     int loopCount = 0;
@@ -1199,6 +1199,12 @@ int main(int argc, char **argv)
 #endif
 
     return 0;
+}
+
+extern "C"
+int main(int argc, char **argv)
+{
+   return run_retrace(argc, argv);
 }
 
 
